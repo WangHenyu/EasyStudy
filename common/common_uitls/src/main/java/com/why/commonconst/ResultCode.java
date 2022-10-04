@@ -1,4 +1,4 @@
-package com.why.commonutils;
+package com.why.commonconst;
 
 public interface ResultCode {
 

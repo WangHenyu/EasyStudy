@@ -23,6 +23,13 @@ spring:
     port: 6379
     timeout: 1800000 # 超时时间
 
+  rabbitmq:
+    virtual-host: /
+    host: 192.168.140.132
+    username: why
+    password: 123
+    port: 5672
+
 mybatis-plus:
   type-aliases-package: com.why.edu.entity
   mapper-locations: classpath:com/why/edu/mapper/xml/*.xml

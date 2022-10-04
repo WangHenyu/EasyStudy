@@ -1,6 +1,7 @@
 package com.why.commonutils;
 
 
+import com.why.commonconst.ResultCode;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 

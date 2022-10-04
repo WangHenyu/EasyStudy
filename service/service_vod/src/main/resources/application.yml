@@ -26,6 +26,16 @@ spring:
         server-addr: 192.168.140.132:8848
         # server-addr: localhost:8848
 
+  rabbitmq:
+    virtual-host: /
+    host: 192.168.140.132
+    username: why
+    password: 123
+    port: 5672
+    listener:
+      simple:
+        acknowledge-mode: auto
+
 mybatis-plus:
   type-aliases-package: com.why.vod.entity
   mapper-locations: classpath:com/why/vod/mapper/xml/*.xml

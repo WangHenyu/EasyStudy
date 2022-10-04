@@ -10,6 +10,7 @@ import com.why.edu.mapper.VideoMapper;
 import com.why.edu.service.ChapterService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.why.edu.service.VideoService;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.why.commonconst.RabbitConst.EXCHANGE_DIRECT_VIDEO;
+import static com.why.commonconst.RabbitConst.ROUTING_KEY_VIDEO_DELETE_MULTI;
 
 /**
  * <p>
@@ -31,6 +36,8 @@ public class ChapterServiceImpl extends ServiceImpl<ChapterMapper, Chapter> impl
 
     @Autowired
     private VideoMapper videoMapper;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
 
     @Override
@@ -74,11 +81,12 @@ public class ChapterServiceImpl extends ServiceImpl<ChapterMapper, Chapter> impl
     @Override
     @Transactional
     public boolean deleteChapterById(String chapterId) {
-
-        videoMapper.delete(new LambdaQueryWrapper<Video>().eq(Video::getChapterId,chapterId));
-
+        LambdaQueryWrapper<Video> wrapper = new LambdaQueryWrapper<Video>().eq(Video::getChapterId, chapterId);
+        List<Video> videos = videoMapper.selectList(wrapper);
+        List<String> videoSourcesIds = videos.stream().map(video -> video.getVideoSourceId()).collect(Collectors.toList());
+        videoMapper.delete(wrapper);
         baseMapper.deleteById(chapterId);
-
+        rabbitTemplate.convertAndSend(EXCHANGE_DIRECT_VIDEO,ROUTING_KEY_VIDEO_DELETE_MULTI,videoSourcesIds);
         return true;
     }
 }

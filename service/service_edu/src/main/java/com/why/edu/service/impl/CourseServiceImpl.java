@@ -4,9 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.why.commonutils.JwtUtils;
-import com.why.commonutils.Result;
 import com.why.edu.client.OrderClient;
-import com.why.edu.client.VodClient;
 import com.why.edu.entity.Course;
 import com.why.edu.entity.CourseDescription;
 import com.why.edu.entity.condition.CourseCondition;
@@ -17,11 +15,10 @@ import com.why.edu.entity.vo.PublishCourseVo;
 import com.why.edu.entity.vo.front.CourseDetailVo;
 import com.why.edu.mapper.*;
 import com.why.edu.service.ChapterService;
-import com.why.edu.service.CommentService;
 import com.why.edu.service.CourseService;
 import com.why.servicebase.entity.vo.ClientCourseVo;
 import com.why.servicebase.exception.EduException;
-import io.jsonwebtoken.JwtException;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,7 +27,12 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import static com.why.commonconst.RabbitConst.*;
 
 /**
  * <p>
@@ -52,11 +54,11 @@ public class CourseServiceImpl extends ServiceImpl<CourseMapper, Course> impleme
     @Autowired
     private VideoMapper videoMapper;
     @Autowired
-    private VodClient vodClient;
-    @Autowired
     private OrderClient orderClient;
     @Autowired
     private CommentMapper commentMapper;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
     @Override
     @Transactional
@@ -147,8 +149,8 @@ public class CourseServiceImpl extends ServiceImpl<CourseMapper, Course> impleme
         List<String> idList = videoMapper.selectAllVideoSourceId(courseIds);
         if (idList.size() > 0){
             // TODO 使用rabbitMq优化
-            // 删除所有视频
-            vodClient.deleteMulti(idList);
+            rabbitTemplate.convertAndSend(EXCHANGE_DIRECT_VIDEO,ROUTING_KEY_VIDEO_DELETE_MULTI,idList);
+
         }
         // 删除小节
         videoMapper.deleteByCourseIds(courseIds);
