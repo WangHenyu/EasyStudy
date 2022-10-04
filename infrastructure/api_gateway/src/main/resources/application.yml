@@ -1,0 +1,45 @@
+server:
+  port: 10010
+
+spring:
+  application:
+    name: service-gateway
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.140.132:8848
+
+    gateway:
+      discovery:
+        locator:
+          # 使用服务发现路由
+          enabled: true
+          # 服务路由名小写
+          lower-case-service-id: true
+      routes:
+        - id: service-edu
+          uri: lb://service-edu
+          predicates:
+            - Path=/eduservice/**
+        - id: service-order
+          uri: lb://service-order
+          predicates:
+            - Path=/eduorder/**
+        - id: service-oss
+          uri: lb://service-oss
+          predicates:
+            - Path=/eduoss/**
+        - id: service-statistics
+          uri: lb://service-statistics
+          predicates:
+            - Path=/edustatistics/**
+        - id: service-user
+          uri: lb://service-user
+          predicates:
+            - Path=/user/**,/api/ucenter/**
+        - id: vod-service
+          uri: lb://vod-service
+          predicates:
+            - Path=/eduvod/**
+

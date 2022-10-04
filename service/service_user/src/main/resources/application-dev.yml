@@ -1,0 +1,45 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/edu_online?serverTimezone=GMT%2B8
+    username: root
+    password: why0417
+
+  # 返回JSON的时间格式
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.140.132:8848
+        #server-addr: localhost:8848
+
+  redis:
+    host: 192.168.140.132
+    port: 6379
+    timeout: 1800000 # 过期时间
+
+  mail:
+    host: smtp.qq.com
+    username: 824842053@qq.com
+    # 邮件服务器提供的加密密码
+    # 设置-> 账户 -> 开发服务 -> 开启POP3/SMTP服务
+    password: lmkrdbqziwdwbdbe
+
+mybatis-plus:
+  type-aliases-package: com.why.edu.entity
+  mapper-locations: classpath:com/why/edu/mapper/xml/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+
+wx:
+  open:
+    # 微信开放平台appId
+    app_id: wxed9954c01bb89b47
+    # 微信开放平台appSecret
+    app_secret: a7482517235173ddb4083788de60b90e
+    # 微信开放平台redirectUrl
+    redirect_url: http://localhost:8160/api/ucenter/wx/callback

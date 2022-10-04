@@ -1,0 +1,9 @@
+server:
+  port: 8160
+
+spring:
+  application:
+    name: service-user
+
+  profiles:
+    active: dev

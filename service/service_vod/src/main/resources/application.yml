@@ -1,0 +1,50 @@
+server:
+  port: 8003
+
+spring:
+  application:
+    name: vod-service
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/edu_online?serverTimezone=GMT%2B8
+    username: root
+    password: why0417
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+  servlet:
+    multipart:
+      max-file-size: 1024MB
+      max-request-size: 1024MB
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.140.132:8848
+        # server-addr: localhost:8848
+
+mybatis-plus:
+  type-aliases-package: com.why.vod.entity
+  mapper-locations: classpath:com/why/vod/mapper/xml/*.xml
+
+aliyun:
+  vod:
+    accessKeyId: LTAI5tMw2RMuuA1caZZJM6qf
+    accessKeySecret: ZyYXwFac07Xm2uw4DC8l8DoBBZDdft
+
+feign:
+  hystrix:
+    # 开启熔断机制
+    enabled: true
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            # 设置hystrix超时时间 默认1000ms
+            timeoutInMilliseconds: 6000

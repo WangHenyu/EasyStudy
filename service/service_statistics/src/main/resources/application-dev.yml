@@ -1,0 +1,41 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/edu_online?serverTimezone=GMT%2B8
+    username: root
+    password: why0417
+
+  # 返回JSON的时间格式
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.140.132:8848
+
+  redis:
+    host: 192.168.140.132
+    port: 6379
+    timeout: 1800000 # 超时时间
+
+mybatis-plus:
+  type-aliases-package: com.why.edu.entity
+  mapper-locations: classpath:com/why/edu/mapper/xml/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+feign:
+  hystrix:
+    # 开启熔断机制
+    enabled: true
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            # 设置hystrix超时时间 默认1000ms
+            timeoutInMilliseconds: 6000

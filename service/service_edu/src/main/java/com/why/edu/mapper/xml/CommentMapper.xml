@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.why.edu.mapper.CommentMapper">
+
+
+    <select id="selectPageCondition" resultType="map">
+        SELECT ec.id,ec.content,ec.nickname,ec.level,ec.is_top AS isTop,ec.gmt_create AS createTime,
+               eco.title
+        FROM edu_comment ec
+        LEFT JOIN edu_course eco ON ec.course_id = eco.id
+        <where>
+            <if test="condition.nickname!=null and condition.nickname!=''">
+                ec.nickname like "%"#{condition.nickname}"%"
+            </if>
+            <if test="condition.courseName!=null and condition.courseName!=''">
+                AND eco.title like "%"#{condition.courseName}"%"
+            </if>
+            <if test="condition.level!=null">
+                AND ec.level = #{condition.level}
+            </if>
+            <if test="condition.begin!=null and condition.begin != ''">
+                AND date(ec.gmt_create) &gt;= #{condition.begin}
+            </if>
+            <if test="condition.end!=null and condition.end != ''">
+                AND date(ec.gmt_create) &lt;= #{condition.end}
+            </if>
+            AND ec.is_deleted = 0
+        </where>
+        ORDER BY ec.gmt_create DESC
+        LIMIT #{current},#{limit}
+    </select>
+
+
+    <select id="selectCountCondition" resultType="int">
+        SELECT count(ec.content)
+        FROM edu_comment ec
+        LEFT JOIN edu_course eco ON ec.course_id = eco.id
+        <where>
+            <if test="condition.nickname!=null and condition.nickname!=''">
+                ec.nickname like "%"#{condition.nickname}"%"
+            </if>
+            <if test="condition.courseName!=null and condition.courseName!=''">
+                AND eco.title like "%"#{condition.courseName}"%"
+            </if>
+            <if test="condition.begin!=null and condition.begin != ''">
+                AND date(ec.gmt_create) &gt;= #{condition.begin}
+            </if>
+            <if test="condition.end!=null and condition.end != ''">
+                AND date(ec.gmt_create) &lt;= #{condition.end}
+            </if>
+            AND ec.is_deleted = 0
+        </where>
+    </select>
+
+    <select id="selectCountByDate" resultType="int">
+        SELECT COUNT(1) FROM edu_comment where DATE(gmt_create) = #{date}
+    </select>
+
+    <delete id="deleteByCourseIds">
+        DELETE FROM edu_comment
+        WHERE
+        <foreach collection="courseIds" item="id" separator="or">
+            course_id = #{id}
+        </foreach>
+    </delete>
+</mapper>

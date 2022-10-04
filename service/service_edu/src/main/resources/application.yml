@@ -1,0 +1,10 @@
+server:
+  port: 8001
+
+spring:
+  application:
+    name: service-edu
+  profiles:
+    # 环境设置
+    active: dev
+

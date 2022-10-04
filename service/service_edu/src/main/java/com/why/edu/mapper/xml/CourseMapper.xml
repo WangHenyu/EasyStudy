@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.why.edu.mapper.CourseMapper">
+
+    <select id="selectPublishCourse" resultType="com.why.edu.entity.vo.PublishCourseVo">
+        SELECT
+            ec.title,ec.cover,ec.price,ec.lesson_num AS lessonNum,et.name AS teacherName,es1.title AS subjectLevelOne,es2.title AS subjectLevelTwo
+        FROM edu_course ec
+        LEFT JOIN edu_teacher et ON ec.teacher_id = et.id
+        LEFT JOIN edu_subject es1 ON ec.subject_parent_id = es1.id
+        LEFT JOIN edu_subject es2 ON ec.subject_id = es2.id
+        where ec.id = #{courseId} AND ec.is_deleted = 0
+    </select>
+
+    <select id="selectCourseListByPage" resultType="com.why.edu.entity.vo.CourseVo">
+        SELECT
+          ec.id,ec.title,ec.cover,ec.price,ec.status,ec.lesson_num,ec.buy_count,ec.view_count,et.name as teacherName
+        FROM edu_course ec
+        LEFT JOIN edu_teacher et ON ec.teacher_id = et.id
+        <where>
+            <if test="condition.title != null and condition.title != ''">
+                ec.title LIKE "%"#{condition.title}"%"
+            </if>
+            <if test="condition.teacherName != null and condition.teacherName != ''">
+                AND et.name LIKE "%"#{condition.teacherName}"%"
+            </if>
+            AND ec.is_deleted = 0
+        </where>
+        LIMIT #{current},#{limit}
+    </select>
+
+    <select id="selectCourseDetails" resultType="com.why.edu.entity.vo.front.CourseDetailVo">
+        SELECT
+            ec.id,ec.title,ec.cover,ec.price,ec.lesson_num AS lessonNum,ec.buy_count AS buyCount,ec.view_count AS viewCount,
+            ed.description,
+            et.id AS teacherId,et.name AS teacherName,et.avatar,et.career AS intro,
+            es1.id AS subjectLevelOneId,es1.title AS subjectLevelOne,
+            es2.id AS subjectLevelTwoId,es2.title AS subjectLevelTwo
+        FROM edu_course ec
+        LEFT JOIN edu_course_description ed ON ec.id = ed.id
+        LEFT JOIN edu_teacher et ON ec.teacher_id = et.id
+        LEFT JOIN edu_subject es1 ON ec.subject_parent_id = es1.id
+        LEFT JOIN edu_subject es2 ON ec.subject_id = es2.id
+        where ec.id = #{courseId} AND ec.is_deleted = 0
+    </select>
+
+    <select id="selectCourseAndTeacherNameById" resultType="com.why.servicebase.entity.vo.ClientCourseVo">
+        SELECT ec.id,ec.title,ec.cover,ec.price,et.name AS teacherName
+        FROM edu_course ec
+        LEFT JOIN edu_teacher et ON ec.teacher_id = et.id
+        WHERE ec.id = #{courseId} AND ec.is_deleted = 0
+    </select>
+
+    <select id="updateViewNumByVideoId" resultType="int">
+        UPDATE edu_course SET view_count = view_count+1 WHERE id IN
+        (SELECT course_id FROM edu_video WHERE id = #{videoId})
+    </select>
+
+    <select id="updateBuyNumById" resultType="int">
+        UPDATE edu_course SET buy_count = buy_count+1 WHERE id = #{courseId}
+    </select>
+
+    <select id="selectIndexCourseData" resultType="com.why.edu.entity.Course">
+        select
+            ecou.id,ecou.title,ecou.cover,ecou.price,ecou.view_count,ecom.commentCount
+        from
+            edu_course ecou
+                left join
+            (select course_id AS cid,COUNT(*) AS commentCount from edu_comment group by course_id) ecom
+            on
+                ecom.cid = ecou.id
+        order by
+            ecou.view_count desc
+        limit 8
+    </select>
+</mapper>
