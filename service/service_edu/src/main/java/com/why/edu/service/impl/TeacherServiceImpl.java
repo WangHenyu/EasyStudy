@@ -7,12 +7,16 @@ import com.why.edu.entity.condition.TeacherCondition;
 import com.why.edu.mapper.TeacherMapper;
 import com.why.edu.service.TeacherService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.why.commonconst.RabbitConst.*;
 
 /**
  * <p>
@@ -25,40 +29,32 @@ import java.util.Objects;
 @Service
 public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher> implements TeacherService {
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
     @Override
     public void queryPage(Page<Teacher> page, TeacherCondition condition) {
         LambdaQueryWrapper<Teacher> wrapper = new LambdaQueryWrapper<>();
-
         if (Objects.isNull(condition)){
             baseMapper.selectPage(page,wrapper);
             return;
         }
-
-        String name = condition.getName();
         Integer level = condition.getLevel();
-        String begin = condition.getBegin();
         String end = condition.getEnd();
-
-        if (!StringUtils.isEmpty(name))
-            wrapper.like(Teacher::getName,name);
-        if (!Objects.isNull(level))
-            wrapper.eq(Teacher::getLevel,level);
-        if ((!StringUtils.isEmpty(begin)))
-            wrapper.ge(Teacher::getGmtCreate,begin);
-        if ((!StringUtils.isEmpty(end)))
-            wrapper.le(Teacher::getGmtCreate,end);
-
+        String name = condition.getName();
+        String begin = condition.getBegin();
+        wrapper.like(!StringUtils.isEmpty(name),Teacher::getName,name);
+        wrapper.eq(!Objects.isNull(level),Teacher::getLevel,level);
+        wrapper.ge(!StringUtils.isEmpty(begin),Teacher::getGmtCreate,begin);
+        wrapper.le(!StringUtils.isEmpty(end),Teacher::getGmtCreate,end);
         wrapper.orderByDesc(Teacher::getGmtCreate);
         baseMapper.selectPage(page,wrapper);
-        return;
-
     }
 
     @Override
     public Map<String, Object> queryTeacherByPage(int current, int limit) {
         Page<Teacher> teacherPage = new Page<>(current,limit);
         baseMapper.selectPage(teacherPage,null);
-
         Map<String,Object> map = new HashMap<>();
         map.put("total",teacherPage.getTotal());
         map.put("teachers",teacherPage.getRecords());
@@ -71,7 +67,6 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher> impl
         wrapper.orderByDesc(Teacher::getLevel);
         Page<Teacher> teacherPage = new Page<>(current,limit);
         baseMapper.selectPage(teacherPage,wrapper);
-
         Map<String,Object> map = new HashMap<>();
         map.put("size",teacherPage.getSize());
         map.put("pages",teacherPage.getPages());
@@ -82,4 +77,35 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher> impl
         map.put("hasPrevious",teacherPage.hasPrevious());
         return map;
     }
+
+    @Override
+    public boolean removeByTeacherId(String teacherId) {
+        LambdaQueryWrapper<Teacher> wrapper = new LambdaQueryWrapper<>();
+        wrapper.select(Teacher::getAvatar);
+        wrapper.eq(Teacher::getId,teacherId);
+        Teacher teacher = baseMapper.selectOne(wrapper);
+        String avatarUrl = teacher.getAvatar();
+        // 发送删除头像消息给rabbitMq
+        rabbitTemplate.convertAndSend(EXCHANGE_DIRECT_OSS,ROUTING_KEY_OSS_DELETE,avatarUrl);
+        // 删除讲师信息
+        int delete = baseMapper.deleteById(teacherId);
+        return delete > 0;
+    }
+
+    @Override
+    public boolean updateByTeacher(Teacher teacher) {
+        LambdaQueryWrapper<Teacher> wrapper = new LambdaQueryWrapper<>();
+        wrapper.select(Teacher::getAvatar);
+        wrapper.eq(Teacher::getId,teacher.getId());
+        Teacher oldTeacher = baseMapper.selectOne(wrapper);
+        String oldAvatarUrl = oldTeacher.getAvatar();
+        if (!StringUtils.isEmpty(oldAvatarUrl) && !oldAvatarUrl.equals(teacher.getAvatar())){
+            // 删除旧头像
+            rabbitTemplate.convertAndSend(EXCHANGE_DIRECT_OSS,ROUTING_KEY_OSS_DELETE,oldAvatarUrl);
+        }
+        int update = baseMapper.updateById(teacher);
+        return update > 0;
+    }
 }
+
+

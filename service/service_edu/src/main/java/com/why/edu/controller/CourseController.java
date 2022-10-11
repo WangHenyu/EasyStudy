@@ -78,8 +78,8 @@ public class CourseController {
 
     @PostMapping("/page/condition/{current}/{limit}")
     @ApiOperation("分类查询教师信息带条件")
-    public Result getCourseListPage(@PathVariable("current")String current,
-                                    @PathVariable("limit")String limit,
+    public Result getCourseListPage(@PathVariable("current")int current,
+                                    @PathVariable("limit")int limit,
                                     @RequestBody(required = false) CourseCondition condition){
         Map<String,Object> courseData = courseService.queryCourseListByPage(current,limit,condition);
         return Result.ok().data("courseData",courseData);

@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.why.commonconst.RabbitConst.*;
 
@@ -108,10 +109,21 @@ public class CourseServiceImpl extends ServiceImpl<CourseMapper, Course> impleme
     @Override
     @Transactional
     public boolean updateCourseInfo(@RequestBody CourseVo courseInfo) {
+        if (courseInfo==null || StringUtils.isEmpty(courseInfo.getId()))
+            return false;
         Course course = new Course();
         CourseDescription description = new CourseDescription();
         BeanUtils.copyProperties(courseInfo,course);
         BeanUtils.copyProperties(courseInfo,description);
+        // 获取旧的课程封面
+        LambdaQueryWrapper<Course> wrapper = new LambdaQueryWrapper<>();
+        wrapper.select(Course::getCover);
+        wrapper.eq(Course::getId,course.getId());
+        Course oldCourse = baseMapper.selectOne(wrapper);
+        // 异步删除旧封面
+        if (!StringUtils.isEmpty(oldCourse.getCover()) && !oldCourse.getCover().equals(courseInfo.getCover())) {
+            rabbitTemplate.convertAndSend(EXCHANGE_DIRECT_OSS, ROUTING_KEY_OSS_DELETE, oldCourse.getCover());
+        }
         // 修改课程信息
         int updateCount = baseMapper.updateById(course);
         if (updateCount == 0)
@@ -123,22 +135,18 @@ public class CourseServiceImpl extends ServiceImpl<CourseMapper, Course> impleme
 
     @Override
     public PublishCourseVo queryPublishCourse(String courseId) {
-        PublishCourseVo publishCourseVo = baseMapper.selectPublishCourse(courseId);
-        return publishCourseVo;
+        return baseMapper.selectPublishCourse(courseId);
     }
 
     @Override
-    public Map<String,Object> queryCourseListByPage(String current, String limit, CourseCondition condition) {
-        Integer index = Integer.valueOf(current);
-        Integer size = Integer.valueOf(limit);
-        index = (index-1)*size;
-        List<CourseVo> courseList = baseMapper.selectCourseListByPage(index,size,condition);
+    public Map<String,Object> queryCourseListByPage(int current, int limit, CourseCondition condition) {
+        int index = (current-1)*limit;
+        List<CourseVo> courseList = baseMapper.selectCourseListByPage(index,limit,condition);
         // 查询课程的数量
         Integer total = baseMapper.selectCount(null);
         Map<String,Object> courseData = new HashMap<>();
         courseData.put("total",total);
         courseData.put("courseList",courseList);
-
         return courseData;
     }
 
@@ -148,9 +156,8 @@ public class CourseServiceImpl extends ServiceImpl<CourseMapper, Course> impleme
         // 获取课程的所有小节的视频ID (有多门课程)
         List<String> idList = videoMapper.selectAllVideoSourceId(courseIds);
         if (idList.size() > 0){
-            // TODO 使用rabbitMq优化
+            //使用rabbitMq优化
             rabbitTemplate.convertAndSend(EXCHANGE_DIRECT_VIDEO,ROUTING_KEY_VIDEO_DELETE_MULTI,idList);
-
         }
         // 删除小节
         videoMapper.deleteByCourseIds(courseIds);
@@ -160,6 +167,15 @@ public class CourseServiceImpl extends ServiceImpl<CourseMapper, Course> impleme
         descriptionMapper.deleteBatchIds(courseIds);
         // 删除评论
         commentMapper.deleteByCourseIds(courseIds);
+        // 批量删除课程封面
+        LambdaQueryWrapper<Course> wrapper = new LambdaQueryWrapper<>();
+        wrapper.select(Course::getCover);
+        wrapper.in(Course::getId,courseIds);
+        List<Course> courseList = baseMapper.selectList(wrapper);
+        List<String> coverUrlList = courseList.stream().map(Course::getCover).collect(Collectors.toList());
+        if (coverUrlList.size() > 0) {
+            rabbitTemplate.convertAndSend(EXCHANGE_DIRECT_OSS, ROUTING_KEY_OSS_DELETE_MULTI, coverUrlList);
+        }
         // 删除课程
         int removeCount = baseMapper.deleteBatchIds(courseIds);
         return removeCount != 0;
@@ -211,29 +227,25 @@ public class CourseServiceImpl extends ServiceImpl<CourseMapper, Course> impleme
 
     @Override
     public ClientCourseVo queryCourseAndTeacherNameById(String courseId) {
-        ClientCourseVo courseVo = baseMapper.selectCourseAndTeacherNameById(courseId);
-        return courseVo;
+        return baseMapper.selectCourseAndTeacherNameById(courseId);
     }
 
     @Override
     public boolean updateViewNum(String videoId) {
         if (StringUtils.isEmpty(videoId)) return false;
         Integer update = baseMapper.updateViewNumByVideoId(videoId);
-        if (update == null || update < 1) return false;
-        return true;
+        return update != null && update >= 1;
     }
 
     @Override
     public boolean updateBuyNum(String courseId) {
         if (StringUtils.isEmpty(courseId)) return false;
         Integer update = baseMapper.updateBuyNumById(courseId);
-        if (update == null || update < 1) return false;
-        return true;
+        return update != null && update >= 1;
     }
 
     @Override
     public List<Course> getIndexCourseData() {
-        List<Course> courseList = baseMapper.selectIndexCourseData();
-        return courseList;
+        return baseMapper.selectIndexCourseData();
     }
 }

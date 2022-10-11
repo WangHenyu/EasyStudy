@@ -22,4 +22,9 @@ public interface TeacherService extends IService<Teacher> {
     Map<String, Object> queryTeacherByPage(int current, int limit);
 
     Map<String, Object> queryTeacherFront(int current, int limit);
+
+    boolean removeByTeacherId(String teacherId);
+
+    boolean updateByTeacher(Teacher teacher);
+
 }

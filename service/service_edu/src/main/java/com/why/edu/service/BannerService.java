@@ -16,4 +16,8 @@ import java.util.List;
 public interface BannerService extends IService<Banner> {
 
     List<Banner> queryFourBanner();
+
+    boolean removeByBannerId(String bannerId);
+
+    boolean updateByBanner(Banner banner);
 }

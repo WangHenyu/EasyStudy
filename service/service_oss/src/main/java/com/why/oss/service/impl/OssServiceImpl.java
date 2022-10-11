@@ -10,6 +10,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStream;
 import java.util.UUID;
 
+import static com.why.oss.uitls.OssConstUtil.*;
+
 @Service
 public class OssServiceImpl implements OssService {
 
@@ -34,10 +36,10 @@ public class OssServiceImpl implements OssService {
     }
 
     private String upload(MultipartFile file, String prefix) {
-        String endpoint = OssConstUtil.ENDPOINT;
-        String accessKeyId = OssConstUtil.KEY_ID;
-        String accessKeySecret = OssConstUtil.KEY_SECRET;
-        String bucketName = OssConstUtil.BUCKET_NAME;
+        String endpoint = ENDPOINT;
+        String accessKeyId = KEY_ID;
+        String accessKeySecret = KEY_SECRET;
+        String bucketName = BUCKET_NAME;
         // 创建OSSClient实例
         OSS ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
         try {

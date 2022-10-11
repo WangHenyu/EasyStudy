@@ -43,7 +43,7 @@ public class BannerController {
             return save ? Result.ok():Result.error();
         }
         // 修改轮播图
-        boolean update = bannerService.updateById(banner);
+        boolean update = bannerService.updateByBanner(banner);
         return update ? Result.ok():Result.error();
     }
 
@@ -53,7 +53,7 @@ public class BannerController {
     @DeleteMapping("/delete/{bannerId}")
     @ApiOperation("根据ID删除轮播图")
     public Result deleteBanner(@PathVariable("bannerId") String bannerId){
-        boolean remove = bannerService.removeById(bannerId);
+        boolean remove = bannerService.removeByBannerId(bannerId);
         return remove ? Result.ok() : Result.error();
     }
 

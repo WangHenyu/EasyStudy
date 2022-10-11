@@ -6,6 +6,7 @@ import com.why.commonconst.RabbitConst;
 import com.why.commonutils.Result;
 import com.why.servicebase.exception.EduException;
 import com.why.vod.utils.VodClientUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.ExchangeTypes;
 import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.Queue;
@@ -18,6 +19,7 @@ import java.util.List;
 
 import static com.why.commonconst.RabbitConst.*;
 
+@Slf4j
 @Component
 public class VideoReceiver {
 
@@ -28,7 +30,7 @@ public class VideoReceiver {
             key = {ROUTING_KEY_VIDEO_DELETE}
     ))
     public void deleteVideo(String videoSourceId){
-        System.out.println("rabbitMq异步删除视频");
+        log.info("rabbitMq异步删除视频");
         try{
             DefaultAcsClient client = VodClientUtil.getClient();
             DeleteVideoRequest request = new DeleteVideoRequest();
@@ -48,7 +50,7 @@ public class VideoReceiver {
             key = {ROUTING_KEY_VIDEO_DELETE_MULTI}
     ))
     public void deleteVideoMulti(List<String> ids){
-        System.out.println("异步批量删除视频");
+        log.info("异步批量删除视频");
         if (ids.size() == 0) return;
         StringBuffer buffer = new StringBuffer();
         ids.stream().forEach(id-> {

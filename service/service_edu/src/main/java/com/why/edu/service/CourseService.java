@@ -31,7 +31,7 @@ public interface CourseService extends IService<Course> {
 
     PublishCourseVo queryPublishCourse(String courseId);
 
-    Map<String,Object> queryCourseListByPage(String current, String limit, CourseCondition condition);
+    Map<String,Object> queryCourseListByPage(int current, int limit, CourseCondition condition);
 
     boolean multiDeleteCourseInfo(List<String> courseIds);
 

@@ -3,8 +3,10 @@ package com.why.edu.mapper;
 import com.why.edu.entity.Comment;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.why.edu.entity.condition.CommentCondition;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,7 @@ import java.util.Map;
  * @author WangHenYu
  * @since 2022-09-25
  */
+@Repository
 public interface CommentMapper extends BaseMapper<Comment> {
 
     List<Map<String,Object>> selectPageCondition(@Param("current") int current,
